@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CFL - Test</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo" style="display: flex; align-items: center;">
+          <img src="logo CFL.png" alt="Logo CFL" class="cfl-logo">
+        </div>
+        <button onclick="logout()" class="btn-exit">Esci</button>
+      </header>
+
+      <main class="test-selection">
+        <h2>Seleziona un Test</h2>
+        <p class="welcome" id="welcomeMessage"></p>
+
+        <div class="test-cards">
+          <!-- Test 1 -->
+          <div class="test-card" id="card1">
+            <div class="test-number">1</div>
+            <h3>Test di Italiano</h3>
+            <p>Test di comprensione della lingua italiana per la sicurezza sul lavoro</p>
+            <p class="test-requirement">Massimo 3 errori consentiti</p>
+            <button onclick="startTest(1)" class="btn btn-primary" id="btn1">Inizia Test</button>
+            <div class="test-status" id="status1"></div>
+          </div>
+
+          <!-- Test 2 -->
+          <div class="test-card locked" id="card2">
+            <div class="test-number">2</div>
+            <h3>Test di Sicurezza sul Lavoro</h3>
+            <p>Corso di Formazione Generale dei Lavoratori (D.Lgs. 81/08)</p>
+            <p class="test-requirement">Massimo 2 errori consentiti</p>
+            <button onclick="startTest(2)" class="btn btn-primary" id="btn2" disabled>🔒 Bloccato</button>
+            <div class="test-status" id="status2"></div>
+          </div>
+
+          <!-- Test 3 -->
+          <div class="test-card locked" id="card3">
+            <div class="test-number">3</div>
+            <h3>Sicurezza in Magazzino</h3>
+            <p>Questionario di verifica dell'apprendimento - Norme di sicurezza operativa</p>
+            <p class="test-requirement">Massimo 1 errore consentito</p>
+            <button onclick="startTest(3)" class="btn btn-primary" id="btn3" disabled>🔒 Bloccato</button>
+            <div class="test-status" id="status3"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Script centrale condiviso -->
+    <script src="script.js?v=10"></script>
+
+    <script>
+      // Protezione pagina: solo utenti registrati
+      if (typeof checkAuth === "function") checkAuth();
+
+      // Messaggio di benvenuto
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      if (userData && userData.nome && userData.cognome) {
+        document.getElementById("welcomeMessage").textContent =
+          "Benvenuto/a " + userData.nome + " " + userData.cognome;
+      }
+
+      // Carica e mostra stato di avanzamento test
+      function loadTestProgress() {
+        const progress = JSON.parse(localStorage.getItem("testProgress") || "{}");
+
+        // Test 1
+        if (progress.test1 && progress.test1.passed) {
+          updateTestStatus(1, progress.test1);
+          unlockTest(2);
+        }
+
+        // Test 2
+        if (progress.test2) {
+          if (progress.test2.passed) {
+            updateTestStatus(2, progress.test2);
+            unlockTest(3);
+          } else if (progress.test2.attempts > 0) {
+            document.getElementById("status2").innerHTML =
+              '<span style="color: #f59e0b; font-weight: 600;">⚠ Da ripetere (' +
+              (progress.test2.errors ?? 0) + " errori)</span>";
+          }
+        }
+
+        // Test 3
+        if (progress.test3) {
+          if (progress.test3.passed) {
+            updateTestStatus(3, progress.test3);
+          } else if (progress.test3.attempts > 0) {
+            document.getElementById("status3").innerHTML =
+              '<span style="color: #f59e0b; font-weight: 600;">⚠ Da ripetere (' +
+              (progress.test3.errors ?? 0) + " errori)</span>";
+          }
+        }
+      }
+
+      function updateTestStatus(testNum, status) {
+        const card = document.getElementById("card" + testNum);
+        const btn = document.getElementById("btn" + testNum);
+        const statusDiv = document.getElementById("status" + testNum);
+
+        card.classList.remove("locked");
+        card.classList.add("completed");
+
+        btn.textContent = "✓ Completato";
+        btn.disabled = false;
+        btn.style.background = "#10b981";
+
+        statusDiv.innerHTML =
+          '<span style="color: #10b981; font-weight: 600; font-size: 14px;">✓ Superato (' +
+          (status.errors ?? 0) + " errori)</span>";
+      }
+
+      function unlockTest(testNum) {
+        const card = document.getElementById("card" + testNum);
+        const btn = document.getElementById("btn" + testNum);
+
+        card.classList.remove("locked");
+        btn.disabled = false;
+        btn.textContent = "Inizia Test";
+        btn.style.background = "#667eea";
+      }
+
+      function startTest(testNum) {
+        window.location.href = "test" + testNum + ".html";
+      }
+
+      function logout() {
+        if (confirm("Sei sicuro di voler uscire?")) {
+          localStorage.clear();
+          window.location.href = "index.html";
+        }
+      }
+
+      // Avvio
+      loadTestProgress();
+    </script>
+  </body>
+</html>
+
+

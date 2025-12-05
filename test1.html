@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test 1 - Italiano</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo" style="display: flex; align-items: center;">
+        <img src="logo CFL.png" alt="Logo CFL" class="cfl-logo">
+      </div>
+      <button onclick="window.location.href='test-selection.html'" class="btn-back btn-small">← Indietro</button>
+    </header>
+
+    <main class="test-page">
+      <div class="test-header">
+        <h2>Test di Italiano</h2>
+        <p class="test-info">Massimo 3 errori consentiti</p>
+        <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+        <p class="progress-text" id="progressText">Domanda 1 di 22</p>
+      </div>
+
+      <div class="test-content">
+        <div id="questionContainer"></div>
+        <div class="navigation-buttons">
+          <button id="prevBtn" class="btn btn-secondary" onclick="previousQuestion()" style="display:none;">← Indietro</button>
+          <button id="nextBtn" class="btn btn-primary" onclick="nextQuestion()">Avanti →</button>
+          <button id="submitBtn" class="btn btn-primary" onclick="submitTest()" style="display:none;">Invia Test</button>
+        </div>
+      </div>
+
+      <div id="resultsContainer" style="display:none;">
+        <div class="results-card">
+          <h2>Risultati Test 1 - Italiano</h2>
+          <div class="score-circle"><div class="score-number" id="scoreDisplay"></div></div>
+          <div id="resultDetails"></div>
+          <div class="signature-section">
+            <p><strong>COGNOME:</strong> <span id="resultCognome"></span></p>
+            <p><strong>NOME:</strong> <span id="resultNome"></span></p>
+            <p><strong>DATA:</strong> <span id="resultData"></span></p>
+            <div class="signature-area" id="signatureArea" style="display:none;">
+              <p><strong>FIRMA:</strong></p>
+              <canvas id="signatureCanvas" width="400" height="150" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+              <button onclick="clearSignature()" class="btn btn-secondary btn-small">🗑️ Cancella Firma</button>
+            </div>
+          </div>
+          <div class="result-buttons">
+            <button id="signAndContinueBtn" class="btn btn-success btn-large" onclick="signAndContinue()" style="display:none;">✍️ Firma e Vai Avanti</button>
+            <button id="retryBtn" class="btn btn-warning" onclick="retryWrongQuestions()" style="display:none;">🔄 Ripeti Domande Sbagliate</button>
+            <button onclick="window.location.href='test-selection.html'" class="btn btn-secondary">Torna alla Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ✅ usa funzioni centralizzate (include ScoreFix) -->
+  <script src="script.js?v=10"></script>
+
+  <script>
+  // --- UTILITY ---
+  const MAX_ERR_1 = 3; // massimo errori consentiti nel Test 1
+
+  function getTestDate(offset = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString('it-IT');
+  }
+
+  // normalizza stringhe per confronto solido
+  function normalize(v){ return v == null ? "" : String(v).trim().toUpperCase(); }
+
+  // --- SEZIONI DOMANDE ---
+  const imageMatchingSection = {
+    section: "SEZIONE 1 - ABBINAMENTO IMMAGINI",
+    question: "Scegli la parola corretta per ogni figura:",
+    type: "image-matching",
+    images: [
+      { src: "immagini test 1/aprire.png",   correct: "APRIRE",    options: ["METTERE", "APRIRE", "SOLLEVARE"] },
+      { src: "immagini test 1/chiudere.png", correct: "CHIUDERE",  options: ["CHIUDERE", "GIRARE", "SCAVARE"] },
+      { src: "immagini test 1/accendere.png",correct: "ACCENDERE", options: ["SPEGNERE", "ACCENDERE", "CADERE"] },
+      { src: "immagini test 1/spegnere.png", correct: "SPEGNERE",  options: ["ACCENDERE", "SPEGNERE", "RACCOGLIERE"] },
+      { src: "immagini test 1/raccogliere.png", correct: "RACCOGLIERE", options: ["CADERE", "METTERE", "RACCOGLIERE"] },
+      { src: "immagini test 1/mettere.png",  correct: "METTERE",   options: ["METTERE", "APRIRE", "GIRARE"] },
+      { src: "immagini test 1/scavare.png",  correct: "SCAVARE",   options: ["SOLLEVARE", "SCAVARE", "CHIUDERE"] },
+      { src: "immagini test 1/girare.png",   correct: "GIRARE",    options: ["GIRARE", "CADERE", "SPEGNERE"] },
+      { src: "immagini test 1/sollevare.png",correct: "SOLLEVARE", options: ["RACCOGLIERE", "SOLLEVARE", "ACCENDERE"] },
+      { src: "immagini test 1/cadere.png",   correct: "CADERE",    options: ["SCAVARE", "CADERE", "METTERE"] }
+    ]
+  };
+
+  // ⚠️ tre chiavi 'correct' allineate ai cartelli
+  const section2Questions = [
+    { section: "SEZIONE 2 - SEGNALI E ESPRESSIONI", question: "A. Questo segnale vuol dire che:", image: "immagini test 1/A- Questo segnale vuol dire che.jpg", options: ["Nessuno può entrare", "Può entrare solo chi ha il permesso", "È pericoloso mettere le mani sulla macchina accesa"], correct: 1 },
+    { section: "SEZIONE 2", question: "B. Questo segnale indica:", image: "immagini test 1/B- Questo segnale indica.jpg", options: ["Pericolo di fulmini", "Scendere giù", "Pericolo contatto elettrico"], correct: 2 },
+    { section: "SEZIONE 2", question: "C. Questo segnale indica:", image: "immagini test 1/C- Questo segnale indica.jpg", options: ["Girare a sinistra", "Andare dritto", "Andare a destra"], correct: 0 },
+    { section: "SEZIONE 2", question: "D. Questo segnale dice:", image: "immagini test 1/D- Questo segnale dice.jpg", options: ["Usare la mano destra", "C'è freddo", "Indossare i guanti di protezione"], correct: 2 },
+    { section: "SEZIONE 2", question: "E. Questo segnale dice:", image: "immagini test 1/E- Questo segnale dice.jpg", options: ["Attento ai ponteggi", "Non devi camminare sotto materiali che si spostano in alto", "È vietato correre"], correct: 1 },
+    { section: "SEZIONE 2", question: "F. MI RACCOMANDO vuol dire:", options: ["Raccontami una storia", "Mi serve qualcosa", "Cerca di stare attento a quello che dico"], correct: 2 },
+    { section: "SEZIONE 2", question: "G. È PERICOLOSO vuol dire:", options: ["Puoi farti male", "È noioso", "Quel lavoro non serve"], correct: 0 },
+    { section: "SEZIONE 2", question: "H. SPOSTATI vuol dire:", options: ["Non devi stare lì", "Fai un altro lavoro", "Mettiti al posto di un altro"], correct: 0 },
+    { section: "SEZIONE 2", question: "I. Se ti dicono STAI FERMO cosa fai?", options: ["Vai via", "Non ti muovi", "Ti muovi"], correct: 1 },
+    { section: "SEZIONE 2", question: "J. DAMMI UNA MANO vuol dire:", options: ["Stai con me", "Aiutami", "Stringimi la mano"], correct: 1 }
+  ];
+
+  const textQuestions = [
+    { question: "Mario fa colazione a casa", correct: true },
+    { question: "Mario usa l'autobus per andare al lavoro", correct: true },
+    { question: "Mario lavora in campagna", correct: false },
+    { question: "Mario fa il magazziniere", correct: false},
+    { question: "La famiglia di Mario è formata da tre persone", correct: false },
+    { question: "La casa di Mario è in montagna", correct: false },
+    { question: "Mario è disordinato", correct: false },
+    { question: "Ogni sabato Mario lavora", correct: false },
+    { question: "A Mario piace lavorare in giardino", correct: true },
+    { question: "Mario non ha amici", correct: false }
+  ];
+
+  const allQuestions = [
+    imageMatchingSection,
+    ...section2Questions,
+    {
+      section: "SEZIONE 3 - COMPRENSIONE DEL TESTO",
+      question: "Leggi il testo e rispondi alle domande:",
+      text: "Mario ha 35 anni e lavora in un'industria tessile. Ogni mattina si sveglia alle 6.30, fa colazione e poi prende l'autobus alle 7.10 per andare al lavoro in città. Mario è responsabile del magazzino: è una persona ordinata e affidabile. Ogni giorno torna a casa alle 18.30 e spesso lavora anche di sabato mattina, però il suo lavoro gli piace ed è contento anche del suo stipendio. Mario abita con la moglie e i suoi tre figli in un paese di campagna in provincia di Vicenza. Nel tempo libero sistema il giardino e pianta i fiori. A Mario piace stare in compagnia. A volte in estate invita i suoi amici a mangiare in giardino.",
+      type: "text",
+      subQuestions: textQuestions
+    }
+  ];
+
+  let currentQuestion = 0, answers = [], questionsToShow = [], isRetry = false;
+  let canvas, ctx, isDrawing = false, hasSignature = false;
+
+  // Conta unità “atomiche” sbagliate nel retry (immagini + sottodomande + quiz semplici)
+  function countAtomicWrongFromRetry(wrongItems) {
+    let count = 0;
+    for (const item of wrongItems || []) {
+      if (item.type === 'image-matching' && Array.isArray(item.subs)) { count += item.subs.length; continue; }
+      if (item.type === 'text' && Array.isArray(item.subs)) { count += item.subs.length; continue; }
+      count += 1; // quiz singolo
+    }
+    return count;
+  }
+
+  function initializeTest() {
+    const retryData = localStorage.getItem('test1_retry');
+
+    if (retryData) {
+      isRetry = true;
+      const wrongItems = JSON.parse(retryData);
+
+      // ricostruisci solo gli elementi sbagliati
+      questionsToShow = wrongItems.map(item => {
+        let original = allQuestions[item.index];
+        if (item.type === 'image-matching') {
+          return { ...original, images: item.subs.map(idx => original.images[idx]) };
+        }
+        if (item.type === 'text') {
+          return { ...original, subQuestions: item.subs.map(idx => original.subQuestions[idx]) };
+        }
+        return original;
+      });
+
+      // FULL SCORE: init totale atomico e set del numero di elementi da recuperare
+      const fullTotal = ScoreFix.atomicTotal(allQuestions);
+      const wrongAtomicCount = countAtomicWrongFromRetry(wrongItems);
+      ScoreFix.init("test1", fullTotal);
+      ScoreFix.setRetryWrong("test1", wrongAtomicCount);
+
+      localStorage.removeItem('test1_retry');
+      document.querySelector('.test-header h2').textContent = 'Test di Italiano - Ripetizione';
+      document.querySelector('.test-info').textContent = 'Rispondi alle domande sbagliate';
+    } else {
+      // test completo
+      questionsToShow = [...allQuestions];
+      const fullTotal = ScoreFix.atomicTotal(allQuestions);
+      ScoreFix.init("test1", fullTotal); // FULL SCORE: totale atomico del test
+    }
+  }
+
+  function displayQuestion() {
+    const q = questionsToShow[currentQuestion];
+    let html = '';
+
+    if (q.type === 'image-matching') {
+      html = '<div class="question-card"><div class="section-title">' + q.section + '</div><h3>' + q.question + '</h3><div class="image-matching-grid">';
+      q.images.forEach(function(img, i) {
+        html += '<div class="image-match-item">';
+        html += '<img src="' + img.src + '" alt="Immagine ' + (i+1) + '">';
+        html += '<div class="match-options">';
+        img.options.forEach(function(opt) {
+          html += '<label class="match-option">';
+          html += '<input type="radio" name="match_' + currentQuestion + '_' + i + '" value="' + opt + '">';
+          html += '<span class="match-text">' + opt + '</span>';
+          html += '</label>';
+        });
+        html += '</div></div>';
+      });
+      html += '</div></div>';
+    } else if (q.type === 'text') {
+      html = '<div class="question-card">';
+      html += '<div class="section-title">' + q.section + '</div>';
+      html += '<h3>' + q.question + '</h3>';
+      html += '<div class="text-box">' + q.text + '</div>';
+      html += '<div class="true-false-questions">';
+      q.subQuestions.forEach(function(sq, i) {
+        html += '<div class="tf-question">';
+        html += '<p>' + sq.question + '</p>';
+        html += '<div class="tf-options">';
+        html += '<label class="tf-option"><input type="radio" name="q' + currentQuestion + '_' + i + '" value="true"><span class="tf-label">V</span></label>';
+        html += '<label class="tf-option"><input type="radio" name="q' + currentQuestion + '_' + i + '" value="false"><span class="tf-label">F</span></label>';
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    } else {
+      html = '<div class="question-card"><div class="section-title">' + q.section + '</div><h3>' + q.question + '</h3>';
+      if (q.image) {
+        html += '<div class="question-image"><img src="' + q.image + '" alt="Segnale"></div>';
+      }
+      html += '<div class="options">';
+      q.options.forEach(function(opt, i) {
+        html += '<label class="option-label"><input type="radio" name="q' + currentQuestion + '" value="' + i + '"><span class="option-text">' + opt + '</span></label>';
+      });
+      html += '</div></div>';
+    }
+
+    document.getElementById('questionContainer').innerHTML = html;
+    updateProgress();
+    updateButtons();
+  }
+
+  function nextQuestion() { saveAnswer(); if (currentQuestion < questionsToShow.length - 1) { currentQuestion++; displayQuestion(); } }
+  function previousQuestion() { saveAnswer(); if (currentQuestion > 0) { currentQuestion--; displayQuestion(); } }
+
+  function saveAnswer() {
+    const q = questionsToShow[currentQuestion];
+    if (q.type === 'image-matching') {
+      const matchAnswers = [];
+      for (let i = 0; i < q.images.length; i++) {
+        const selected = document.querySelector('input[name="match_' + currentQuestion + '_' + i + '"]:checked');
+        matchAnswers.push(selected ? selected.value : null);
+      }
+      answers[currentQuestion] = matchAnswers;
+    } else if (q.type === 'text') {
+      const subAnswers = [];
+      for (let i = 0; i < q.subQuestions.length; i++) {
+        const selected = document.querySelector('input[name="q' + currentQuestion + '_' + i + '"]:checked');
+        subAnswers.push(selected ? selected.value === 'true' : null);
+      }
+      answers[currentQuestion] = subAnswers;
+    } else {
+      const selected = document.querySelector('input[name="q' + currentQuestion + '"]:checked');
+      answers[currentQuestion] = selected ? parseInt(selected.value) : null;
+    }
+  }
+
+  function updateProgress() {
+    const progress = ((currentQuestion + 1) / questionsToShow.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('progressText').textContent = 'Domanda ' + (currentQuestion + 1) + ' di ' + questionsToShow.length;
+  }
+
+  function updateButtons() {
+    document.getElementById('prevBtn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextBtn').style.display = currentQuestion < questionsToShow.length - 1 ? 'inline-block' : 'none';
+    document.getElementById('submitBtn').style.display = currentQuestion === questionsToShow.length - 1 ? 'inline-block' : 'none';
+  }
+
+  function submitTest() {
+    saveAnswer();
+
+    // blocco invio se manca anche una sola risposta (via array answers, non DOM)
+    for (let i=0;i<questionsToShow.length;i++){
+      const q=questionsToShow[i], a=answers[i];
+      if (q.type==='image-matching'){
+        if(!Array.isArray(a)||a.length!==q.images.length||a.some(v=>v==null)){ alert('⚠️ Compila tutte le risposte prima di inviare.'); return; }
+      } else if (q.type==='text'){
+        if(!Array.isArray(a)||a.length!==q.subQuestions.length||a.some(v=>v==null)){ alert('⚠️ Compila tutte le risposte prima di inviare.'); return; }
+      } else {
+        if(a==null||Number.isNaN(a)){ alert('⚠️ Compila tutte le risposte prima di inviare.'); return; }
+      }
+    }
+
+    let errors = 0, total = 0, wrongItems = [];
+    questionsToShow.forEach(function(q, i) {
+      const originalIndex = allQuestions.indexOf(q);
+
+      if (q.type === 'image-matching') {
+        const wrongSubs = [];
+        q.images.forEach(function(img, j) {
+          total++;
+          if (!answers[i] || normalize(answers[i][j]) !== normalize(img.correct)) {
+            errors++;
+            wrongSubs.push(j);
+          }
+        });
+        if (wrongSubs.length) {
+          wrongItems.push({index: originalIndex, type: "image-matching", subs: wrongSubs});
+        }
+      } else if (q.type === "text") {
+        const wrongSubs = [];
+        q.subQuestions.forEach(function(sq, j){
+          total++;
+          if(!answers[i] || answers[i][j] !== sq.correct){
+            errors++;
+            wrongSubs.push(j);
+          }
+        });
+        if(wrongSubs.length){
+          wrongItems.push({index: originalIndex, type: "text", subs: wrongSubs});
+        }
+      } else {
+        total++;
+        if(answers[i] !== q.correct){
+          errors++;
+          wrongItems.push({index: originalIndex, type: "quiz"});
+        }
+      }
+    });
+
+    const correctThisRun = total - errors;
+
+    // ===== FULL SCORE: calcola punteggio sul totale del test (anche dopo retry)
+    const full = ScoreFix.build("test1", correctThisRun);
+
+    const passed = (full.total - full.correct) <= MAX_ERR_1; // soglia su totale pieno
+    const progress = JSON.parse(localStorage.getItem('testProgress') || '{}');
+    progress.test1 = {
+      errors: full.total - full.correct,
+      correct: full.correct,
+      total: full.total,
+      percentage: full.percentage,
+      passed,
+      attempts: (progress.test1 && progress.test1.attempts || 0) + 1,
+      date: new Date().toISOString()
+    };
+    localStorage.setItem('testProgress', JSON.stringify(progress));
+
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    document.querySelector('.test-content').style.display = "none";
+    document.querySelector('.test-header').style.display = "none";
+    document.getElementById('resultsContainer').style.display = "block";
+    document.getElementById('scoreDisplay').textContent = full.correct + "/" + full.total;
+    document.getElementById('resultCognome').textContent = userData.cognome || "";
+    document.getElementById('resultNome').textContent = userData.nome || "";
+    document.getElementById('resultData').textContent = getTestDate(-1);
+
+    if (passed) {
+        document.getElementById('resultDetails').innerHTML =
+          '<p class="result-percentage">Punteggio: ' + full.percentage + '%</p>' +
+          '<p class="result-status passed">✓ TEST SUPERATO</p>' +
+          '<p class="error-count">Errori: ' + (full.total - full.correct) + '/' + MAX_ERR_1 + '</p>' +
+          '<p class="success-message">Ottimo lavoro! Firma per procedere.</p>';
+        document.getElementById('signatureArea').style.display = 'block';
+        document.getElementById('signAndContinueBtn').style.display = 'block';
+        initializeSignatureCanvas();
+
+    } else {
+      document.getElementById('resultDetails').innerHTML =
+          '<p class="result-percentage">Punteggio: ' + full.percentage + '%</p>' +
+          '<p class="result-status failed">✗ TEST NON SUPERATO</p>' +
+          '<p class="error-count">Errori: ' + (full.total - full.correct) + '/' + MAX_ERR_1 + '</p>' +
+          '<p class="retry-message">⚠️ Devi ripetere le domande sbagliate</p>';
+      document.getElementById('retryBtn').style.display = 'block';
+      localStorage.setItem('test1_retry', JSON.stringify(wrongItems));
+    }
+  }
+
+  function retryWrongQuestions(){ window.location.reload(); }
+
+  function initializeSignatureCanvas(){
+    canvas = document.getElementById('signatureCanvas');
+    if(!canvas) return;
+    ctx = canvas.getContext('2d');
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    canvas.addEventListener('mousedown', function(e){
+      isDrawing = true; hasSignature = true;
+      const rect = canvas.getBoundingClientRect();
+      ctx.beginPath(); ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    });
+    canvas.addEventListener('mousemove', function(e){
+      if(!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    });
+    canvas.addEventListener('mouseup', function(){ isDrawing = false; });
+    canvas.addEventListener('mouseout', function(){ isDrawing = false; });
+    canvas.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      isDrawing = true; hasSignature = true;
+      ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    });
+    canvas.addEventListener('touchmove', function(e){
+      e.preventDefault();
+      if(!isDrawing) return;
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      ctx.stroke();
+    });
+    canvas.addEventListener('touchend', function(){ isDrawing = false; });
+  }
+
+  function clearSignature(){ ctx.clearRect(0, 0, canvas.width, canvas.height); hasSignature = false; }
+
+  async function signAndContinue() {
+    if(!hasSignature){ alert('⚠️ Per favore firma prima di continuare'); return; }
+
+    const progress = JSON.parse(localStorage.getItem('testProgress') || '{}');
+    progress.test1.signature = canvas.toDataURL("image/png");
+    localStorage.setItem('testProgress', JSON.stringify(progress));
+
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const data = progress.test1 || {};
+    const signatureBase64 = canvas ? canvas.toDataURL("image/png") : "";
+    const testResultData = {
+      userId: userData.userId || "",
+      nome: userData.nome || "",
+      cognome: userData.cognome || "",
+      email: userData.email || "",
+      telefono: userData.telefono || "",
+      nomeTest: "Test 1 - Italiano",
+      score: data.correct,              // FULL
+      total: data.total,                // FULL
+      percentuale: data.percentage,     // FULL
+      stato: data.passed ? "Superato" : "Ripeti",
+      data_test: getTestDate(-1),
+      firma: signatureBase64
+    };
+
+    try{
+      await window.sendTestDataToSheet(testResultData);
+    } catch(e){
+      alert("Errore durante l’invio. Riprova tra pochi secondi.");
+      return;
+    }
+    window.location.href = "test-selection.html";
+  }
+
+  initializeTest();
+  displayQuestion();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

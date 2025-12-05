@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrazione - CFL Test</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <style>
+    /* solo micro-stile per allineare la checkbox alla label */
+    .checkbox-inline {
+      display:flex; align-items:center; gap:10px;
+      margin-top:10px;
+    }
+    .checkbox-inline input[type="checkbox"]{
+      width:18px; height:18px; cursor:pointer;
+    }
+    .checkbox-inline label {
+      margin:0; cursor:pointer;
+    }
+    .checkbox-inline a { text-decoration: underline; }
+    .hint-muted { font-size:12px; color:#666; margin-top:px; }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 410px;">
+    <header>
+      <div class="logo" style="display: flex; align-items: center; justify-content: center;">
+        <img src="logo CFL.png" alt="Logo CFL" class="cfl-logo">
+      </div>
+    </header>
+
+    <main style="padding-top: 0px;">
+      <div class="card">
+        <h2 style="text-align:center;">Registrazione</h2>
+        <p class="description" style="text-align:center;">Compila il modulo per accedere ai test</p>
+
+        <!-- ✅ Form non bloccante -->
+        <form id="registrationForm" onsubmit="event.preventDefault(); fastRegister();">
+          <div class="form-group">
+            <label for="cognome">Cognome *</label>
+            <input type="text" id="cognome" name="cognome" required>
+          </div>
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" id="nome" name="nome" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="telefono">Numero di Telefono *</label>
+            <input type="tel" id="telefono" name="telefono" placeholder="+39" required>
+          </div>
+
+          <!-- ✅ Checkbox in linea e bloccata fino a lettura privacy -->
+          <div class="form-group">
+            <div class="checkbox-inline">
+              <input type="checkbox" id="privacy" name="privacy" disabled>
+              <label for="privacy">
+                Accetto la <a href="privacy.html" target="_blank" rel="noopener" id="privacyLink">privacy policy</a> *
+              </label>
+            </div>
+            <div id="privacyHint" class="hint-muted">
+              Apri e conferma l’informativa per abilitare la spunta.
+            </div>
+          </div>
+
+          <button type="submit" id="registerBtn" class="btn btn-primary">REGISTRATI</button>
+        </form>
+
+        <div id="successMessage" class="success-message" style="display: none;">
+          <p>✓ Registrazione completata con successo!</p>
+          <button onclick="window.location.href='login.html'" class="btn btn-secondary">Accedi</button>
+        </div>
+
+        <div class="access-footer" style="margin-top:20px; text-align:center; font-size:15px;">
+          Sei già registrato? <a href="login.html">Accedi qui</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SCRIPT CENTRALIZZATO -->
+  <script defer src="script.js?v=12"></script>
+
+  <script>
+    // Abilita il flag privacy solo dopo conferma su privacy.html
+    function syncPrivacyState() {
+      const viewed = localStorage.getItem('privacyViewed') === '1';
+      const chk = document.getElementById('privacy');
+      const hint = document.getElementById('privacyHint');
+      chk.disabled = !viewed;
+      hint.style.display = viewed ? 'none' : 'block';
+    }
+    // all’avvio
+    syncPrivacyState();
+    // se la conferma avviene in un’altra scheda, questo evento aggiorna lo stato
+    window.addEventListener('storage', function(e){
+      if (e.key === 'privacyViewed') syncPrivacyState();
+    });
+    // se l’utente prova a cliccare la checkbox quando è disabilitata, apri la privacy
+    document.getElementById('privacy').addEventListener('click', function(e){
+      if (this.disabled) {
+        e.preventDefault();
+        window.open('privacy.html', '_blank', 'noopener');
+      }
+    });
+
+    async function fastRegister() {
+      // controllo esplicito privacy
+      const privacyOk = document.getElementById('privacy').checked;
+      if (!privacyOk) {
+        alert('Per proseguire devi leggere e accettare la privacy policy.');
+        return;
+      }
+
+      const btn = document.getElementById('registerBtn');
+      btn.disabled = true;
+      btn.textContent = "Invio...";
+
+      const userData = {
+        userId: generateUserId(document.getElementById('email').value),
+        cognome: document.getElementById('cognome').value.trim(),
+        nome: document.getElementById('nome').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        registrationDate: new Date().toISOString()
+      };
+
+      // pulizia dati di eventuali utenti precedenti
+      localStorage.removeItem('testProgress');
+      localStorage.removeItem('test1_retry');
+      localStorage.removeItem('test2_retry');
+      localStorage.removeItem('test3_retry');
+      localStorage.removeItem('allTestsCompleted');
+
+      // salva subito localmente
+      localStorage.setItem('userData', JSON.stringify(userData));
+      localStorage.setItem('isRegistered', 'true');
+
+      // invio in background (non blocca)
+      try { sendUserRegistration(userData); } catch (e) { console.warn(e); }
+
+      // UI conferma
+      document.getElementById('registrationForm').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'block';
+
+      setTimeout(() => { btn.disabled = false; btn.textContent = "REGISTRATI"; }, 500);
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+

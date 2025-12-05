@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Informativa Privacy – CFL Test</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root{
+      --pv-bg:#f7f7f9;
+      --pv-card:#fff;
+      --pv-text:#1d1d1f;
+      --pv-muted:#6b7280;
+      --pv-border:#eceff3;
+      --pv-primary:#e5151a;
+      --pv-primary-600:#c40f13;
+      --pv-ring:rgba(229,21,26,.25);
+      --pv-radius:16px;
+      --pv-shadow:0 10px 26px rgba(0,0,0,.08);
+    }
+
+    .pv-wrap{
+      min-height:100dvh;
+      background:var(--pv-bg);
+      display:grid;
+      place-items:start center;
+      padding:20px 14px 36px;
+      background:
+        radial-gradient(900px 400px at 50% -160px,#ffe9ea 0%,transparent 60%),
+        var(--pv-bg);
+    }
+
+    .pv-card{
+      width:min(880px,100%);
+      background:var(--pv-card);
+      border:1px solid var(--pv-border);
+      border-radius:var(--pv-radius);
+      box-shadow:var(--pv-shadow);
+      padding:clamp(18px,3.5vw,32px);
+    }
+
+    /* ===== HEADER ===== */
+    .pv-header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+
+    .pv-logo{
+      height:clamp(42px,9vw,58px);
+      width:auto;
+      object-fit:contain;
+      margin-bottom:2px;
+    }
+
+    h1.pv-title{
+      font-size:clamp(20px,5vw,28px);
+      margin:0;
+      line-height:1.2;
+      letter-spacing:.2px;
+      color:var(--pv-text);
+    }
+
+    .pv-sub{
+      color:var(--pv-muted);
+      font-size:clamp(13px,3.4vw,15px);
+      margin-bottom:14px;
+    }
+
+    .pv-divider{
+      height:1px;
+      background:var(--pv-border);
+      margin:10px 0 18px;
+    }
+
+    /* ===== CONTENT ===== */
+    .pv-section{ margin:14px 0; }
+    .pv-section h2{ font-size:clamp(16px,4.6vw,18px); margin:0 0 8px; }
+    .pv-section p{ margin:6px 0; color:var(--pv-text); line-height:1.55; }
+    .pv-list{ margin:6px 0 0 0; padding-left:18px; }
+    .pv-list li{ margin:6px 0; line-height:1.55; }
+
+    .pv-meta{
+      display:grid; gap:6px;
+      padding:10px 12px;
+      border:1px dashed var(--pv-border);
+      border-radius:12px;
+      background:#fafbff;
+      font-size:clamp(13px,3.8vw,14px);
+      margin-top:6px;
+    }
+    .pv-meta b{ font-weight:600; }
+
+    /* ===== ACTIONS ===== */
+    .pv-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:22px;
+    }
+
+    .pv-btn{
+      -webkit-appearance:none; appearance:none;
+      border:none; cursor:pointer;
+      padding:14px 16px;
+      border-radius:12px;
+      font-weight:700;
+      letter-spacing:.2px;
+      transition:transform .06s ease, box-shadow .2s ease, background .2s ease;
+      box-shadow:0 6px 16px rgba(0,0,0,.08);
+      width:100%;
+      font-size:16px;
+    }
+    .pv-btn:focus{ outline:3px solid var(--pv-ring); outline-offset:2px; }
+    .pv-btn:active{ transform:translateY(1px); }
+    .pv-btn-primary{ background:var(--pv-primary); color:#fff; }
+    .pv-btn-primary:hover{ background:var(--pv-primary-600); }
+    .pv-btn-ghost{ background:#fff; color:var(--pv-text); border:1px solid var(--pv-border); }
+
+    .pv-note{ font-size:12px; color:var(--pv-muted); margin-top:6px; text-align:center; }
+
+    a{ color:var(--pv-primary); text-decoration:underline; }
+    a:focus{ outline:3px solid var(--pv-ring); outline-offset:2px; }
+
+    @media(min-width:640px){
+      .pv-header{ flex-direction:row; justify-content:flex-start; text-align:left; gap:16px; }
+      .pv-logo{ height:54px; margin:0; }
+      .pv-actions{ flex-direction:row; justify-content:flex-start; }
+      .pv-btn{ width:auto; padding:12px 20px; font-size:15px; }
+    }
+
+    @media print{
+      .pv-wrap{ background:#fff; padding:0; }
+      .pv-card{ box-shadow:none; border:none; }
+      .pv-actions,.pv-note{ display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="pv-wrap">
+    <article class="pv-card" role="article" aria-labelledby="pv-title">
+      <header class="pv-header">
+        <img src="logo CFL.png" alt="CFL" class="pv-logo" />
+        <div>
+          <h1 id="pv-title" class="pv-title">Informativa sulla Privacy</h1>
+          <div class="pv-sub">Regolamento (UE) 2016/679 – GDPR</div>
+        </div>
+      </header>
+
+      <div class="pv-divider" aria-hidden="true"></div>
+
+      <section class="pv-section">
+        <p>
+          Ai sensi del Regolamento (UE) 2016/679 (“GDPR”), ti informiamo che i dati
+          personali da te inseriti (nome, cognome, email, telefono) saranno trattati
+          esclusivamente per la gestione dell’accesso ai test, la registrazione dei login
+          e l’archiviazione dei risultati.
+        </p>
+      </section>
+
+      <section class="pv-section">
+        <h2>Titolare del Trattamento</h2>
+        <div class="pv-meta">
+          <div><b>CFL S.p.A.</b></div>
+          <div>Via Pasubio, 1 – 20067 Tribiano (MI)</div>
+          <div>Email: <a href="mailto:info@cflspa.it">info@cflspa.it</a></div>
+        </div>
+      </section>
+
+      <section class="pv-section">
+        <h2>Finalità e Base giuridica</h2>
+        <ul class="pv-list">
+          <li>Gestione della registrazione e autenticazione degli utenti;</li>
+          <li>Tracciamento degli accessi e archiviazione degli esiti dei test;</li>
+          <li>Adempimenti di legge in materia di sicurezza sul lavoro.</li>
+        </ul>
+        <p><b>Base giuridica:</b> esecuzione di misure precontrattuali/contrattuali e adempimento di obblighi di legge.</p>
+      </section>
+
+      <section class="pv-section">
+        <h2>Modalità del trattamento</h2>
+        <p>
+          I dati sono trattati con strumenti informatici; alcune informazioni
+          sono memorizzate in Google Sheets tramite Google Apps Script.
+        </p>
+      </section>
+
+      <section class="pv-section">
+        <h2>Conservazione</h2>
+        <p>
+          I dati saranno conservati per il tempo necessario alla gestione dei test
+          e secondo gli obblighi normativi applicabili.
+        </p>
+      </section>
+
+      <section class="pv-section">
+        <h2>Diritti dell’interessato</h2>
+        <p>
+          Puoi esercitare i diritti di accesso, rettifica, cancellazione, limitazione,
+          portabilità e opposizione scrivendo a
+          <a href="mailto:info@cflspa.it">info@cflspa.it</a>.
+        </p>
+      </section>
+
+      <section class="pv-section">
+        <h2>Trasferimenti</h2>
+        <p>
+          Alcuni servizi potrebbero risiedere in Paesi extra UE; sono adottate
+          garanzie adeguate (es. Clausole Contrattuali Standard).
+        </p>
+      </section>
+
+      <div class="pv-actions">
+        <button class="pv-btn pv-btn-primary" onclick="confirmPrivacy()">Ho letto e compreso</button>
+        <button class="pv-btn pv-btn-ghost" onclick="goBack()">Torna alla registrazione</button>
+      </div>
+      <div class="pv-note">Se la finestra non si chiude automaticamente, torna manualmente alla scheda precedente.</div>
+    </article>
+  </div>
+
+  <script>
+    function confirmPrivacy(){
+      try{ localStorage.setItem('privacyViewed','1'); }catch(e){}
+      window.close();
+      alert('Grazie. Ora puoi spuntare la casella nella pagina di registrazione.');
+      try{ window.history.back(); }catch(e){ window.location.href='index.html'; }
+    }
+    function goBack(){
+      try{ window.history.back(); }catch(e){ window.location.href='index.html'; }
+    }
+  </script>
+</body>
+</html>
+
+

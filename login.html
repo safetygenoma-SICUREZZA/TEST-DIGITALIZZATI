@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - CFL Test</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- ⚡ Preconnessione per handshake rapido con Apps Script -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+</head>
+<body>
+  <div class="login-page">
+    <img src="logo CFL.png" alt="Logo CFL" class="cfl-logo" style="margin-bottom:18px;">
+    <h2 class="login-title" style="text-align:center;">Accedi all'Area Riservata</h2>
+
+    <form id="loginForm" class="login-form" onsubmit="event.preventDefault(); quickLogin();">
+      <div class="form-group">
+        <label for="login-email">Email *</label>
+        <input type="email" id="login-email" name="login-email" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label for="login-telefono">Telefono *</label>
+        <input type="tel" id="login-telefono" name="login-telefono" autocomplete="tel" required />
+      </div>
+      <button type="submit" class="btn">Login</button>
+      <div class="login-error" style="display:none; color:#c62828; text-align:center; margin-top:10px;"></div>
+    </form>
+
+    <div class="access-footer" style="margin-top:20px; text-align:center; font-size:15px;">
+      Non hai ancora un account? <a href="index.html">Registrati qui</a>
+    </div>
+  </div>
+
+  <!-- SCRIPT CENTRALE -->
+  <script defer src="script.js?v=12"></script>
+
+  <script>
+    // ✅ Normalizza valori (coerenti con GAS)
+    function normEmail(v){ return (v||"").trim().toLowerCase(); }
+    function normPhone(v){ return (v||"").replace(/\D+/g, ""); }
+
+    async function quickLogin() {
+      const email = normEmail(document.getElementById("login-email").value);
+      const telefono = normPhone(document.getElementById("login-telefono").value);
+      const btn = document.querySelector(".btn");
+      const errorBox = document.querySelector(".login-error");
+
+      btn.disabled = true;
+      btn.textContent = "Verifica...";
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+
+      try {
+        if (!window.GASURL) throw new Error("GASURL non definita");
+        const url = `${window.GASURL}?action=login_check&email=${encodeURIComponent(email)}&telefono=${encodeURIComponent(telefono)}`;
+        const resp = await fetch(url, { method: "GET", cache: "no-cache" });
+
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json().catch(() => ({}));
+        console.log("🔍 login_check:", data);
+
+        if (
+          data && data.ok && data.found && data.user &&
+          data.user.email === email &&
+          data.user.telefono === telefono
+        ) {
+
+          // ✅ Salvo localmente
+          localStorage.setItem("userData", JSON.stringify(data.user));
+          localStorage.setItem("isRegistered", "true");
+
+          // ✅ Pulisce eventuali vecchi progressi (nuovo utente)
+          localStorage.removeItem("testProgress");
+          localStorage.removeItem("test1_retry");
+          localStorage.removeItem("test2_retry");
+          localStorage.removeItem("test3_retry");
+          localStorage.removeItem("allTestsCompleted");
+
+          // ✅ Invio in background (non blocca)
+          try { window.sendLoginEvent(data.user); } catch(e){ console.warn("LoginEvent fallito:", e); }
+
+          // ✅ Redirect immediato
+          window.location.replace("test-selection.html");
+          return;
+        }
+
+        // ❌ Utente non trovato
+        errorBox.textContent = "Utente non trovato. Registrati prima.";
+        errorBox.style.display = "block";
+
+      } catch (err) {
+        console.error("Errore login:", err);
+        errorBox.textContent = "Errore di connessione o risposta non valida.";
+        errorBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Login";
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

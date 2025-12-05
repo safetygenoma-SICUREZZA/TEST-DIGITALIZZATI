@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test 3 - Sicurezza in Magazzino</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo" style="display: flex; align-items: center;">
+        <img src="logo CFL.png" alt="Logo CFL" class="cfl-logo" />
+      </div>
+      <button onclick="window.location.href='test-selection.html'" class="btn-back btn-small">← Indietro</button>
+    </header>
+
+    <main class="test-page">
+      <div class="test-header">
+        <h2>Test 3 - Sicurezza in Magazzino</h2>
+        <p class="test-info">Massimo 1 errore consentito</p>
+        <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+        <p class="progress-text" id="progressText">Domanda 1 di 6</p>
+      </div>
+
+      <div class="test-content">
+        <div id="questionContainer"></div>
+        <div class="navigation-buttons">
+          <button id="prevBtn" class="btn btn-secondary" onclick="previousQuestion()" style="display:none;">← Indietro</button>
+          <button id="nextBtn" class="btn btn-primary" onclick="nextQuestion()">Avanti →</button>
+          <button id="submitBtn" class="btn btn-primary" onclick="submitTest()" style="display:none;">Invia Test</button>
+        </div>
+      </div>
+
+      <div id="resultsContainer" style="display:none;">
+        <div class="results-card">
+          <h2>Risultati Test 3 - Magazzino</h2>
+          <div class="score-circle">
+            <div class="score-number" id="scoreDisplay"></div>
+          </div>
+          <div id="resultDetails"></div>
+          <div class="signature-section">
+            <p><strong>COGNOME:</strong> <span id="resultCognome"></span></p>
+            <p><strong>NOME:</strong> <span id="resultNome"></span></p>
+            <p><strong>DATA:</strong> <span id="resultData"></span></p>
+            <div class="signature-area" id="signatureArea" style="display:none;">
+              <p><strong>FIRMA:</strong></p>
+              <canvas id="signatureCanvas" width="400" height="150" style="border:1px solid #ccc; display:block; margin:10px 0;"></canvas>
+              <button onclick="clearSignature()" class="btn btn-secondary btn-small">🗑️ Cancella Firma</button>
+            </div>
+          </div>
+          <div class="result-buttons">
+            <button id="signAndSubmitBtn" class="btn btn-success btn-large" onclick="signAndSubmit()" style="display:none;">✍️ Firma e Invia</button>
+            <button id="retryBtn" class="btn btn-warning" onclick="retryWrongQuestions()" style="display:none;">🔄 Ripeti Domande Sbagliate</button>
+            <button onclick="window.location.href='test-selection.html'" class="btn btn-secondary">Torna alla Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- usa lo script centrale con ScoreFix -->
+  <script src="script.js?v=10"></script>
+
+  <script>
+    const questions = [
+      {
+        question: "Lo spostamento a piedi all'interno del magazzino è consentito:",
+        options: ["Utilizzando le vie di fuga","Utilizzando i percorsi pedonali","Mai"],
+        correct: 1,
+      },
+      {
+        question: "L'utilizzo del cellulare, di radioline, cuffiette o dispositivi elettronici:",
+        options: ["È consentito per giusta causa","È vietato solo a bordo del servomezzo di tipologia timonato","È vietato al di fuori delle aree consentite"],
+        correct: 2,
+      },
+      {
+        question: "Il lavoratore ha l'obbligo di comunicare:",
+        options: ["Solamente l'infortunio","Sia infortuni che near miss ed incidenti","Solo eventi in cui si fa male"],
+        correct: 1,
+      },
+      {
+        question: "Le vie di fuga e transito del personale devono:",
+        options: ["Essere occupate dai materiali per il minor tempo possibile","Rimanere sempre libere e sgombre","Essere liberabili facilmente"],
+        correct: 1,
+      },
+      {
+        question: "I dispositivi di sicurezza:",
+        options: ["Possono essere rimossi se impediscono di lavorare","Non sempre proteggono dai rischi","Non vanno mai rimossi"],
+        correct: 2,
+      },
+      {
+        question: "Per sollevare un carico bisogna:",
+        options: ["Tenere le gambe diritte e piegare la schiena","Lavorare con le braccia","Piegare le gambe e tenere la schiena eretta"],
+        correct: 2,
+      },
+    ];
+
+    let currentQuestion = 0;
+    let answers = [];
+    let questionsToShow = [];
+    let canvas, ctx, isDrawing = false, hasSignature = false;
+    let isRetry = false;
+
+    function getTestDate(offset = 1) {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return d.toLocaleDateString("it-IT");
+    }
+
+    function initializeTest() {
+      const retryData = localStorage.getItem("test3_retry");
+      if (retryData) {
+        isRetry = true;
+        const wrongIndices = JSON.parse(retryData);
+        questionsToShow = wrongIndices.map((idx) => questions[idx]);
+
+        // FULL SCORE: totale pieno e quante ne stai recuperando
+        ScoreFix.init("test3", questions.length);
+        ScoreFix.setRetryWrong("test3", wrongIndices.length);
+
+        localStorage.removeItem("test3_retry");
+        document.querySelector(".test-header h2").textContent = "Test 3 - Ripetizione";
+        document.querySelector(".test-info").textContent = "Rispondi alle domande sbagliate";
+        document.getElementById("progressText").textContent = `Domanda 1 di ${questionsToShow.length}`;
+      } else {
+        questionsToShow = [...questions];
+
+        // FULL SCORE: totale pieno
+        ScoreFix.init("test3", questions.length);
+      }
+    }
+
+    function displayQuestion() {
+      const q = questionsToShow[currentQuestion];
+      let html = '<div class="question-card"><div class="question-number">' +
+        (currentQuestion + 1) + "</div><h3>" + q.question +
+        "</h3><div class='options'>";
+      q.options.forEach(function (opt, i) {
+        html += '<label class="option-label"><input type="radio" name="q' +
+          currentQuestion + '" value="' + i + '"><span class="option-text">' +
+          opt + "</span></label>";
+      });
+      html += "</div></div>";
+      document.getElementById("questionContainer").innerHTML = html;
+      updateProgress();
+      updateButtons();
+    }
+
+    function nextQuestion() { saveAnswer(); if (currentQuestion < questionsToShow.length - 1) { currentQuestion++; displayQuestion(); } }
+    function previousQuestion() { saveAnswer(); if (currentQuestion > 0) { currentQuestion--; displayQuestion(); } }
+
+    function saveAnswer() {
+      const selected = document.querySelector('input[name="q' + currentQuestion + '"]:checked');
+      answers[currentQuestion] = selected ? parseInt(selected.value) : null;
+    }
+
+    function updateProgress() {
+      const progress = ((currentQuestion + 1) / questionsToShow.length) * 100;
+      document.getElementById("progressBar").style.width = progress + "%";
+      document.getElementById("progressText").textContent = "Domanda " + (currentQuestion + 1) + " di " + questionsToShow.length;
+    }
+
+    function updateButtons() {
+      document.getElementById("prevBtn").style.display = currentQuestion > 0 ? "inline-block" : "none";
+      document.getElementById("nextBtn").style.display = currentQuestion < questionsToShow.length - 1 ? "inline-block" : "none";
+      document.getElementById("submitBtn").style.display = currentQuestion === questionsToShow.length - 1 ? "inline-block" : "none";
+    }
+
+    function submitTest() {
+      saveAnswer();
+
+      // verifica risposte mancanti
+      for (let i=0;i<questionsToShow.length;i++){
+        if (answers[i] == null || Number.isNaN(answers[i])) {
+          alert("⚠️ Compila tutte le risposte prima di inviare."); return;
+        }
+      }
+
+      // punteggio di QUESTA RUN
+      let errorsThisRun = 0, wrongIndices = [];
+      questionsToShow.forEach(function (q, i) {
+        if (answers[i] !== q.correct) {
+          errorsThisRun++;
+          const originIdx = questions.indexOf(q);
+          if (originIdx !== -1) wrongIndices.push(originIdx);
+        }
+      });
+      const totalThisRun = questionsToShow.length;
+      const correctThisRun = totalThisRun - errorsThisRun;
+
+      // ===== FULL SCORE: calcolo sul totale del test =====
+      const full = ScoreFix.build("test3", correctThisRun);
+      const passed = (full.total - full.correct) <= 1; // soglia sul totale pieno
+
+      // salva progress ***FULL***
+      const progress = JSON.parse(localStorage.getItem("testProgress") || "{}");
+      progress.test3 = {
+        errors: full.total - full.correct,
+        correct: full.correct,
+        total: full.total,
+        percentage: full.percentage,
+        passed: passed,
+        attempts: ((progress.test3 && progress.test3.attempts) || 0) + 1,
+        date: new Date().toISOString(),
+      };
+      localStorage.setItem("testProgress", JSON.stringify(progress));
+
+      // UI risultato ***FULL***
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      document.querySelector(".test-content").style.display = "none";
+      document.querySelector(".test-header").style.display = "none";
+      document.getElementById("resultsContainer").style.display = "block";
+      document.getElementById("scoreDisplay").textContent = full.correct + "/" + full.total;
+      document.getElementById("resultCognome").textContent = userData.cognome || "";
+      document.getElementById("resultNome").textContent = userData.nome || "";
+      document.getElementById("resultData").textContent = getTestDate(1);
+
+      if (passed) {
+        localStorage.removeItem("test3_retry"); // pulizia in caso restasse
+        document.getElementById("resultDetails").innerHTML =
+          '<p class="result-percentage">Punteggio: ' + full.percentage + "%</p>" +
+          '<p class="result-status passed">✓ TEST SUPERATO</p>' +
+          '<p class="error-count">Errori: ' + (full.total - full.correct) + '/1</p>' +
+          '<p class="success-message">🎉 Complimenti! Hai completato tutti i test. Firma per confermare.</p>';
+        document.getElementById("signatureArea").style.display = "block";
+        document.getElementById("signAndSubmitBtn").style.display = "block";
+        initializeSignatureCanvas();
+      } else {
+        // salva per retry solo se non passato
+        document.getElementById("resultDetails").innerHTML =
+          '<p class="result-percentage">Punteggio: ' + full.percentage + "%</p>" +
+          '<p class="result-status failed">✗ TEST NON SUPERATO</p>' +
+          '<p class="error-count">Errori: ' + (full.total - full.correct) + '/1</p>' +
+          '<p class="retry-message">⚠️ Devi ripetere le domande sbagliate</p>';
+        document.getElementById("retryBtn").style.display = "block";
+        localStorage.setItem("test3_retry", JSON.stringify(wrongIndices));
+      }
+    }
+
+    function retryWrongQuestions() { window.location.reload(); }
+
+    function initializeSignatureCanvas() {
+      canvas = document.getElementById("signatureCanvas");
+      if (!canvas) return;
+      ctx = canvas.getContext("2d");
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      canvas.addEventListener("mousedown", function (e) {
+        isDrawing = true;
+        hasSignature = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+      });
+      canvas.addEventListener("mousemove", function (e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
+      });
+      canvas.addEventListener("mouseup", function () { isDrawing = false; });
+      canvas.addEventListener("mouseout", function () { isDrawing = false; });
+      canvas.addEventListener("touchstart", function (e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        isDrawing = true;
+        hasSignature = true;
+        ctx.beginPath();
+        ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      });
+      canvas.addEventListener("touchmove", function (e) {
+        e.preventDefault();
+        if (!isDrawing) return;
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        ctx.stroke();
+      });
+      canvas.addEventListener("touchend", function () { isDrawing = false; });
+    }
+
+    function clearSignature() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSignature = false;
+    }
+
+    async function signAndSubmit() {
+      if (!hasSignature) { alert("⚠️ Per favore firma prima di inviare"); return; }
+
+      const progress = JSON.parse(localStorage.getItem("testProgress") || "{}");
+      progress.test3.signature = canvas.toDataURL("image/png");
+      localStorage.setItem("testProgress", JSON.stringify(progress));
+      localStorage.setItem("allTestsCompleted", "true");
+
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const data = progress.test3 || {};
+      const signatureBase64 = canvas ? canvas.toDataURL("image/png") : "";
+      const testResultData = {
+        userId: userData.userId || "",
+        nome: userData.nome || "",
+        cognome: userData.cognome || "",
+        email: userData.email || "",
+        telefono: userData.telefono || "",
+        nomeTest: "Test 3 - Sicurezza in Magazzino",
+        score: data.correct,          // FULL
+        total: data.total,            // FULL
+        percentuale: data.percentage, // FULL
+        stato: data.passed ? "Superato" : "Ripeti",
+        data_test: getTestDate(1),
+        firma: signatureBase64,
+      };
+
+      try{
+        await window.sendTestDataToSheet(testResultData);
+      } catch(e){
+        alert("Errore durante l’invio. Riprova tra pochi secondi.");
+        return;
+      }
+
+      alert("✅ Complimenti! Hai completato tutti i test con successo!");
+      window.location.href = "test-selection.html";
+    }
+
+    // avvio test
+    initializeTest();
+    displayQuestion();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
