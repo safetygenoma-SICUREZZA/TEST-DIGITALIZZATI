@@ -33,11 +33,35 @@
       </div>
 
       <div id="resultsContainer" style="display:none;">
-        <div class="results-card">
-          <h2>Risultati Test 3 - Magazzino</h2>
-          <div class="score-circle">
-            <div class="score-number" id="scoreDisplay"></div>
-          </div>
+  <div class="results-card">
+    <h2>Risultati Test 3 - Magazzino</h2>
+
+    <div class="score-circle">
+      <div class="score-number" id="scoreDisplay"></div>
+    </div>
+
+    <div id="resultDetails"></div>
+
+    <div class="signature-section">
+      <p><strong>COGNOME:</strong> <span id="resultCognome"></span></p>
+      <p><strong>NOME:</strong> <span id="resultNome"></span></p>
+      <p><strong>DATA:</strong> <span id="resultData"></span></p>
+
+      <div class="signature-area" id="signatureArea" style="display:none;">
+        <p><strong>FIRMA:</strong></p>
+        <canvas id="signatureCanvas" width="400" height="150" style="border:1px solid #ccc; display:block; margin:10px 0;"></canvas>
+        <button onclick="clearSignature()" class="btn btn-secondary btn-small">🗑️ Cancella Firma</button>
+      </div>
+    </div>
+
+    <div class="result-buttons">
+      <button id="signAndSubmitBtn" class="btn btn-success btn-large" onclick="signAndSubmit()" style="display:none;">✍️ Firma e Invia</button>
+      <button id="retryBtn" class="btn btn-warning" onclick="retryWrongQuestions()" style="display:none;">🔄 Ripeti Domande Sbagliate</button>
+      <button onclick="window.location.href='test-selection.html'" class="btn btn-secondary">Torna alla Dashboard</button>
+    </div>
+  </div>
+</div>
+
           <div id="resultDetails"></div>
           <div class="signature-section">
             <p><strong>COGNOME:</strong> <span id="resultCognome"></span></p>
@@ -330,6 +354,7 @@
   </script>
 </body>
 </html>
+
 
 
 
